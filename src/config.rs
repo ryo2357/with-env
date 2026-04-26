@@ -11,7 +11,50 @@ pub struct Secrets {
 #[derive(Debug, Deserialize)]
 pub struct Settings {
     pub allow_run_path: Vec<PathBuf>,
-    pub allow_command: Vec<Vec<String>>, // String から Vec<String> に変更
+    pub allow_command: Vec<Vec<String>>,
+    pub shell: Option<String>, //任意指定とする
+}
+
+impl Settings {
+    pub fn validate_path(&self, current_dir: &std::path::Path) -> Result<()> {
+        let is_allowed = self
+            .allow_run_path
+            .iter()
+            .any(|allowed| current_dir.starts_with(allowed));
+
+        if !is_allowed {
+            anyhow::bail!("実行パスが許可されていません: {:?}", current_dir);
+        }
+        Ok(())
+    }
+
+    pub fn validate_command(&self, command: &[String]) -> Result<()> {
+        // 1. メタ文字のチェック（追加コマンドの実行を防止）
+        #[cfg(debug_assertions)]
+        let meta_chars = ['&', '|', ';', '>', '<', '`', '(', ')'];
+
+        #[cfg(not(debug_assertions))]
+        let meta_chars = ['&', '|', ';', '>', '<', '`', '$', '(', ')'];
+
+        for arg in command {
+            if arg.chars().any(|c| meta_chars.contains(&c)) {
+                anyhow::bail!("コマンドに不正な文字が含まれています: {}", arg);
+            }
+        }
+
+        // 2. 許可リストとの前方一致照合
+        // 例: allowed が ["cargo", "test"] の場合、
+        // command が ["cargo", "test", "mod2"] なら許可される
+        let is_allowed = self
+            .allow_command
+            .iter()
+            .any(|allowed| command.starts_with(allowed));
+
+        if !is_allowed {
+            anyhow::bail!("許可されていないコマンドです: {:?}", command);
+        }
+        Ok(())
+    }
 }
 
 pub struct Config {

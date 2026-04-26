@@ -32,16 +32,19 @@ AIエージェント環境下でのシークレット情報（APIキー等）の
 
 ### settings.json
 
-実行制限を定義するJSONファイル。
+実行制限および実行環境を定義するJSONファイル。
 
 ```json
 {
   "allow_run_path": ["PATH_TO_ALLOW"],
-  "allow_command": [["command", "subcommand"]]
+  "allow_command": [["command", "subcommand"]],
+  "shell": "nu"
 }
 ```
 
-- `allow_command` は、コマンドと引数の配列のリストとして定義されます。
+- `allow_run_path`: 実行を許可するディレクトリの絶対パスリスト。
+- `allow_command`: 許可するコマンドのプレフィックス（配列）のリスト。
+- `shell`: (オプション) コマンドを実行する際に使用するシェルの実行名またはパス（例: `nu`, `cmd`, `bash`）。指定された場合、`shell -c "command args"` の形式で実行されます。
 
 ### .env ファイル
 

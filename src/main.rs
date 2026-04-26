@@ -1,5 +1,6 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
+use std::process::Command;
 
 mod config;
 mod env;
@@ -36,13 +37,43 @@ fn main() -> Result<()> {
             // 2. 環境変数の展開
             let envs = env::EnvManager::get_expanded_envs(&config)?;
             // デバッグ用にキーと値をすべて表示
-            println!("--- 展開された環境変数 ---");
-            for (key, value) in &envs {
-                println!("{}: {}", key, value);
+            if cfg!(debug_assertions) {
+                println!("--- 展開された環境変数 ---");
+                for (key, value) in &envs {
+                    println!("{}: {}", key, value);
+                }
+                println!("実行予定のコマンド: {:?}", command);
             }
-            println!("実行予定のコマンド: {:?}", command);
 
-            // 3. 次のフェーズ: バリデーションとコマンド実行
+            // 4. セキュリティバリデーション
+            let current_dir = std::env::current_dir()?;
+            config.settings.validate_path(&current_dir)?;
+            config.settings.validate_command(&command)?;
+
+            // 5. コマンドの実行
+            let mut child = if let Some(shell_cmd) = &config.settings.shell {
+                let mut cmd = Command::new(shell_cmd);
+                // Nushell や多くのシェルで -c は「後に続く文字列をコマンドとして実行」するフラグ
+                cmd.arg("-c").arg(command.join(" "));
+                cmd
+            } else {
+                // シェル指定がない場合は直接実行
+                let mut cmd = Command::new(&command[0]);
+                cmd.args(&command[1..]);
+                cmd
+            };
+
+            // 展開された環境変数を注入
+            for (key, value) in envs {
+                child.env(key, value);
+            }
+
+            // プロセスの実行と待機
+            let status = child
+                .status()
+                .with_context(|| format!("コマンドの実行に失敗しました: {}", command[0]))?;
+            // 終了コードを継承して終了
+            std::process::exit(status.code().unwrap_or(1));
         }
     }
 
