@@ -70,8 +70,9 @@ impl Config {
             std::env::current_dir()?.join(".dev_config")
         } else {
             // リリースビルド時は OS 標準の設定ディレクトリを使用
-            dirs::config_dir()
-                .context("設定ディレクトリが見つかりませんでした")?
+            dirs::home_dir()
+                .context("ホームディレクトリが見つかりませんでした")?
+                .join(".config")
                 .join("with-env")
         };
 
