@@ -8,14 +8,14 @@ impl EnvManager {
     pub fn get_expanded_envs(config: &Config) -> Result<HashMap<String, String>> {
         let mut expanded_envs = HashMap::new();
 
-        // 開発時は設定ディレクトリ直下の .env、リリース時はカレントディレクトリ直下の .env
+        // 開発時は設定ディレクトリ直下の with.env、リリース時はカレントディレクトリ直下の with.env
         let env_path = if cfg!(debug_assertions) {
-            config.config_dir.join(".env")
+            config.config_dir.join("with.env")
         } else {
-            std::env::current_dir()?.join(".env")
+            std::env::current_dir()?.join("with.env")
         };
 
-        // 指定したパスの .env ファイルをパース
+        // 指定したパスの with.env ファイルをパース
         // ファイルが存在しない場合はエラーにせず空のMapを返すか、必要に応じて処理
         if env_path.exists() {
             for item in dotenvy::from_path_iter(&env_path)? {

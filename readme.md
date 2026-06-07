@@ -1,6 +1,8 @@
 # with-env
 
-`.env` ファイルに直接キーを書かず、プレースホルダで管理して流出リスクを低減するためのCLIツール
+`.env`には機密キーを書かず、プレースホルダだけを置くためのCLIツールです。
+
+キー本体はプロジェクト外の `~/.config/with-env/secrets.json`で管理します。
 
 ## インストール方法
 
@@ -14,7 +16,7 @@ cargo install --path .
 
 1. 設定ディレクトリの作成
    OSに関わらず、以下のディレクトリに設定ファイルを配置します。
-   `~/.config/with/` (Windowsの場合は `C:\Users\<ユーザー名>\.config\with\`)
+   `~/.config/with-env/` (Windowsの場合は `C:\Users\<ユーザー名>\.config\with-env\`)
 
 2. シークレットの設定 (secrets.json)
    機密情報を保持するファイルです。
@@ -48,8 +50,8 @@ shell: (オプション) 指定すると shell -c "command args" の形式で実
 
 ## 使い方
 
-1. .env ファイルの準備
-   プロジェクトのルートにある .env ファイルにプレースホルダを記述します。
+1. with.env ファイルの準備
+   プロジェクトのルートにある `with.env` ファイルにプレースホルダを記述します。
 
 ```.env
 # secrets.json から展開される
